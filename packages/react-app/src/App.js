@@ -10,7 +10,7 @@ const { TextArea } = Input;
 const { BufferList } = require('bl')
 
 const ipfsAPI = require('ipfs-http-client');
-const ipfs = ipfsAPI({host: 'ipfs.infura.io', port: '5001', protocol: 'https' })
+const ipfs = ipfsAPI({ host: 'ipfs.infura.io', port: '5001', protocol: 'https' })
 
 const getFromIPFS = async hashToGet => {
   for await (const file of ipfs.get(hashToGet)) {
@@ -31,8 +31,8 @@ const addToIPFS = async fileToUpload => {
   }
 }
 
-const mainnetProvider = new ethers.providers.InfuraProvider("mainnet","2717afb6bf164045b5d5468031b93f87")
-const localProvider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_PROVIDER?process.env.REACT_APP_PROVIDER:"http://localhost:8545")
+const mainnetProvider = new ethers.providers.InfuraProvider("mainnet", "2717afb6bf164045b5d5468031b93f87")
+const localProvider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_PROVIDER ? process.env.REACT_APP_PROVIDER : "http://localhost:8545")
 
 function App() {
 
@@ -41,65 +41,65 @@ function App() {
   const price = useExchangePrice(mainnetProvider)
   const gasPrice = useGasPrice("fast")
 
-  const tx = Transactor(injectedProvider,gasPrice)
+  const tx = Transactor(injectedProvider, gasPrice)
 
   const readContracts = useContractLoader(localProvider);
   const writeContracts = useContractLoader(injectedProvider);
 
-  const myAttestation = useContractReader(readContracts,"Attestor","attestations",[address],1777);
+  const myAttestation = useContractReader(readContracts, "Attestor", "attestations", [address], 1777);
 
-  const [ data, setData ] = useState()
-  const [ sending, setSending ] = useState()
-  const [ loading, setLoading ] = useState()
-  const [ ipfsHash, setIpfsHash ] = useState()
-  const [ ipfsContents, setIpfsContents ] = useState()
-  const [ attestationContents, setAttestationContents ] = useState()
+  const [data, setData] = useState()
+  const [sending, setSending] = useState()
+  const [loading, setLoading] = useState()
+  const [ipfsHash, setIpfsHash] = useState()
+  const [ipfsContents, setIpfsContents] = useState()
+  const [attestationContents, setAttestationContents] = useState()
 
-  const asyncGetFile = async ()=>{
+  const asyncGetFile = async () => {
     let result = await getFromIPFS(ipfsHash)
     setIpfsContents(result.toString())
   }
 
-  useEffect(()=>{
-    if(ipfsHash) asyncGetFile()
-  },[ipfsHash])
+  useEffect(() => {
+    if (ipfsHash) asyncGetFile()
+  }, [ipfsHash])
 
   let ipfsDisplay = ""
-  if(ipfsHash){
-    if(!ipfsContents){
+  if (ipfsHash) {
+    if (!ipfsContents) {
       ipfsDisplay = (
         <Spin />
       )
-    }else{
+    } else {
       ipfsDisplay = (
-        <pre style={{margin:8,padding:8,border:"1px solid #dddddd",backgroundColor:"#ededed"}}>
+        <pre style={{ margin: 8, padding: 8, border: "1px solid #dddddd", backgroundColor: "#ededed" }}>
           {ipfsContents}
         </pre>
       )
     }
   }
 
-  const asyncGetAttestation = async ()=>{
+  const asyncGetAttestation = async () => {
     let result = await getFromIPFS(myAttestation)
     setAttestationContents(result.toString())
   }
 
-  useEffect(()=>{
-    if(myAttestation) asyncGetAttestation()
-  },[myAttestation])
+  useEffect(() => {
+    if (myAttestation) asyncGetAttestation()
+  }, [myAttestation])
 
 
   let attestationDisplay = ""
-  if(myAttestation){
-    if(!attestationContents){
+  if (myAttestation) {
+    if (!attestationContents) {
       attestationDisplay = (
         <Spin />
       )
-    }else{
+    } else {
       attestationDisplay = (
         <div>
           <Address value={address} /> attests to:
-          <pre style={{margin:8,padding:8,border:"1px solid #dddddd",backgroundColor:"#ededed"}}>
+          <pre style={{ margin: 8, padding: 8, border: "1px solid #dddddd", backgroundColor: "#ededed" }}>
             {attestationContents}
           </pre>
         </div>
@@ -111,7 +111,7 @@ function App() {
   return (
     <div className="App">
       <Header />
-      <div style={{position:'fixed',textAlign:'right',right:0,top:0,padding:10}}>
+      <div style={{ position: 'fixed', textAlign: 'right', right: 0, top: 0, padding: 10 }}>
         <Account
           address={address}
           setAddress={setAddress}
@@ -123,37 +123,37 @@ function App() {
         />
       </div>
 
-      <div style={{padding:32,textAlign: "left"}}>
+      <div style={{ padding: 32, textAlign: "left" }}>
         Enter a bunch of data:
-        <TextArea rows={10} value={data} onChange={(e)=>{
+        <TextArea rows={10} value={data} onChange={(e) => {
           setData(e.target.value)
         }} />
-        <Button style={{margin:8}} loading={sending} size="large" shape="round" type="primary" onClick={async()=>{
-          console.log("UPLOADING...")
-          setSending(true)
-          setIpfsHash()
-          setIpfsContents()
+        <Button style={{ margin: 8 }} loading={sending} size="large" shape="round" type="primary" onClick={async () => {
+          // console.log("UPLOADING...")
+          // setSending(true)
+          // setIpfsHash()
+          // setIpfsContents()
           const result = await addToIPFS(data)
-          if(result && result.path) {
+          if (result && result.path) {
             setIpfsHash(result.path)
           }
           setSending(false)
-          console.log("RESULT:",result)
+          console.log("RESULT:", result)
         }}>Upload to IPFS</Button>
       </div>
 
-      <div style={{padding:32,textAlign: "left"}}>
-        IPFS Hash: <Input value={ipfsHash} onChange={(e)=>{
+      <div style={{ padding: 32, textAlign: "left" }}>
+        IPFS Hash: <Input value={ipfsHash} onChange={(e) => {
           setIpfsHash(e.target.value)
         }} />
         {ipfsDisplay}
 
-        <Button disabled={!ipfsHash} style={{margin:8}} size="large" shape="round" type="primary" onClick={async()=>{
-          tx( writeContracts["Attestor"].attest(ipfsHash) )
+        <Button disabled={!ipfsHash} style={{ margin: 8 }} size="large" shape="round" type="primary" onClick={async () => {
+          tx(writeContracts["Attestor"].attest(ipfsHash))
         }}>Attest to this hash on Ethereum</Button>
       </div>
 
-      <div style={{padding:32,textAlign: "left"}}>
+      <div style={{ padding: 32, textAlign: "left" }}>
         {attestationDisplay}
       </div>
 
@@ -165,7 +165,7 @@ function App() {
         />
       </div>*/}
 
-      <div style={{position:'fixed',textAlign:'right',right:0,bottom:20,padding:10}}>
+      <div style={{ position: 'fixed', textAlign: 'right', right: 0, bottom: 20, padding: 10 }}>
         <Row align="middle" gutter={4}>
           <Col span={10}>
             <Provider name={"mainnet"} provider={mainnetProvider} />
@@ -178,7 +178,7 @@ function App() {
           </Col>
         </Row>
       </div>
-      <div style={{position:'fixed',textAlign:'left',left:0,bottom:20,padding:10}}>
+      <div style={{ position: 'fixed', textAlign: 'left', left: 0, bottom: 20, padding: 10 }}>
         <Row align="middle" gutter={4}>
           <Col span={9}>
             <Ramp
