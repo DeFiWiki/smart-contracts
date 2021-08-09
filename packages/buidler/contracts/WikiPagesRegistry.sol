@@ -43,7 +43,7 @@ contract WikiPagesRegistry {
         //set last section in array
         lastSectionInArray[_wikiPageName] = _sectionHashes.length - 1;
 
-        // updates array
+        // updates array 
         pageExists[_wikiPageName] = true;
 
         // // this could be empty if we just create page and allow users to challenge sections
