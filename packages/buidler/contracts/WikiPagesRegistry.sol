@@ -17,7 +17,7 @@ contract WikiPagesRegistry {
     mapping(string => uint256) public pagePositionInArray;
     mapping(string => uint256) public lastSectionInArray;
     mapping(string => bool) public pageExists;
-    mapping(string => address) public pageSectionMaintainer; //  sectionHash => managerAddres
+    mapping(string => address) public pageSectionMaintainer; //  sectionHash => managerAddres !!! probably incorrect, if two sections can have same hashes, possible collusion
 
     constructor() {
         // this is neccessary for the mappings not to be confusing, they return 0 if no value,
@@ -112,6 +112,5 @@ contract WikiPagesRegistry {
     }
 
     function getNumOfPages() public view returns (uint256) {
-        return wikiPages.length - 1; // comment
-    }
+        return wikiPages.length - 1; 
 }
