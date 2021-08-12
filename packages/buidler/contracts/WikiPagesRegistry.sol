@@ -14,15 +14,56 @@ contract WikiPagesRegistry {
     // pages start from 2.nd place => position 1
     string[][] public wikiPages;
 
+    struct SectionMetadata {
+        string wikiPageName;
+        string sectionName;
+        string currentHash;
+        string previousHash;
+        address sectionMaintainer;
+    }
+
     mapping(string => uint256) public pagePositionInArray;
     mapping(string => uint256) public lastSectionInArray;
     mapping(string => bool) public pageExists;
     mapping(string => address) public pageSectionMaintainer; //  sectionHash => managerAddres !!! probably incorrect, if two sections can have same hashes, possible collusion
+    mapping(string => SectionMetadata) public getSectionMetadata; // section hash => section metadata
+    mapping(string => string) public getPreviousHash;
 
     constructor() {
         // this is neccessary for the mappings not to be confusing, they return 0 if no value,
         // so if array starts from 0 it is confusing
         wikiPages.push(["Empty page, wikiPages start at position 1"]);
+    }
+
+    function sectionExists(string memory _hash) public view returns (bool) {
+        if (pageSectionMaintainer[_hash] != address(0)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // !! only governance
+    function createSectionMetadata(
+        string memory _wikiPageName,
+        string memory _sectionName,
+        string memory _currentHash,
+        address _sectionMaintainer
+    ) public {
+        // checks if section has unique hash => unique content
+        require(!sectionExists(_currentHash), "section already exists");
+        // checks if wiki page exists
+        require(pagePositionInArray[_wikiPageName] != 0);
+
+        // SectionMetadata
+        SectionMetadata memory section = SectionMetadata(
+            _wikiPageName,
+            _sectionName,
+            _currentHash,
+            "",
+            _sectionMaintainer
+        );
+        getSectionMetadata[_currentHash] = section;
     }
 
     // !! only governance
@@ -32,6 +73,18 @@ contract WikiPagesRegistry {
     ) external {
         // check if page does not already exists
         require(!pageExists[_wikiPageName], "wiki_page_does_already_exist");
+
+        for (uint256 i = 0; i < _sectionHashes.length; i++) {
+            // checks if section has unique hash => unique content
+            require(
+                !sectionExists(_sectionHashes[i]),
+                "section already exists"
+            );
+            // adds placeholder maintainer for sections, this is necessary not to break fn sectionExists
+            pageSectionMaintainer[
+                _sectionHashes[i]
+            ] = 0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF;
+        }
 
         // creates new page in array + writes section hashes
         //// section hashes
@@ -43,7 +96,7 @@ contract WikiPagesRegistry {
         //set last section in array
         lastSectionInArray[_wikiPageName] = _sectionHashes.length - 1;
 
-        // updates array 
+        // updates array
         pageExists[_wikiPageName] = true;
 
         // // this could be empty if we just create page and allow users to challenge sections
@@ -67,10 +120,25 @@ contract WikiPagesRegistry {
         string memory _wikiPageName,
         string[] memory _newSectionHashes
     ) public {
+        // checks if wiki does not yet exists
+        require(
+            pagePositionInArray[_wikiPageName] != 0,
+            "wiki page does not exist"
+        );
+
         uint256 pagePosition = pagePositionInArray[_wikiPageName];
 
         for (uint256 i = 0; i < _newSectionHashes.length; i++) {
+            // checks if section has unique hash => unique content
+            require(
+                !sectionExists(_newSectionHashes[i]),
+                "section already exists"
+            );
             wikiPages[pagePosition].push(_newSectionHashes[i]);
+            // adds placeholder maintainer for sections, this is necessary not to break fn sectionExists
+            pageSectionMaintainer[
+                _newSectionHashes[i]
+            ] = 0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF;
         }
 
         // wikiPages[pagePosition].push(_newSectionHashes);
@@ -105,12 +173,28 @@ contract WikiPagesRegistry {
                 ],
             "you are not maintainer for this section"
         );
+        // checks if section has unique hash => unique content
+        require(
+            !sectionExists(_newSectionHash),
+            "section already exists, please include metadata"
+        );
+
+        // changes hash in array
         wikiPages[_pagePositionInArray][
             _sectionPositionInArray
         ] = _newSectionHash;
+        // updates mapping pageSectionMaintainer
+        pageSectionMaintainer[_newSectionHash] = msg.sender;
+        // update mapping getPreviousHash
+        getPreviousHash[_newSectionHash] = wikiPages[_pagePositionInArray][
+            _sectionPositionInArray
+        ];
+
+        // TODO update section metadata
         return true;
     }
 
     function getNumOfPages() public view returns (uint256) {
-        return wikiPages.length - 1; 
+        return wikiPages.length - 1;
+    }
 }
