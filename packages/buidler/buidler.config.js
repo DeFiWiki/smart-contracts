@@ -19,9 +19,9 @@ task("blockNumber", "Prints the block number", async () => {
 task("balance", "Prints an account's balance")
   .addPositionalParam("account", "The account's address")
   .setAction(async (taskArgs) => {
-  const balance = await web3.eth.getBalance(await addr(taskArgs.account))
-  console.log(web3.utils.fromWei(balance, "ether"), "ETH");
-});
+    const balance = await web3.eth.getBalance(await addr(taskArgs.account))
+    console.log(web3.utils.fromWei(balance, "ether"), "ETH");
+  });
 
 task("send", "Send ETH")
   .addParam("from", "From address or account index")
@@ -38,33 +38,33 @@ task("send", "Send ETH")
 
 
     let to
-    if(taskArgs.to){
-        to = await addr(taskArgs.to)
-        debug(`Normalized to address: ${to}`)
+    if (taskArgs.to) {
+      to = await addr(taskArgs.to)
+      debug(`Normalized to address: ${to}`)
     }
 
     let txparams = {
-        from: from,
-        to: to,
-        value: web3.utils.toWei(taskArgs.amount?taskArgs.amount:"0", "ether"),
-        gasPrice: web3.utils.toWei(taskArgs.gasPrice?taskArgs.gasPrice:"1.001", "gwei"),
-        gas: taskArgs.gasLimit?taskArgs.gasLimit:"24000"
+      from: from,
+      to: to,
+      value: web3.utils.toWei(taskArgs.amount ? taskArgs.amount : "0", "ether"),
+      gasPrice: web3.utils.toWei(taskArgs.gasPrice ? taskArgs.gasPrice : "1.001", "gwei"),
+      gas: taskArgs.gasLimit ? taskArgs.gasLimit : "24000"
     }
 
-    if(taskArgs.data !== undefined) {
+    if (taskArgs.data !== undefined) {
       txparams['data'] = taskArgs.data
       debug(`Adding data to payload: ${txparams['data']}`)
     }
-    debug((txparams.gasPrice/1000000000)+" gwei")
-    debug(JSON.stringify(txparams,null,2))
+    debug((txparams.gasPrice / 1000000000) + " gwei")
+    debug(JSON.stringify(txparams, null, 2))
 
     return await send(txparams)
-});
+  });
 
 function send(txparams) {
   return new Promise((resolve, reject) => {
-    web3.eth.sendTransaction(txparams,(error, transactionHash) => {
-      if(error){
+    web3.eth.sendTransaction(txparams, (error, transactionHash) => {
+      if (error) {
         debug(`Error: ${error}`)
       }
       debug(`transactionHash: ${transactionHash}`)
@@ -73,29 +73,29 @@ function send(txparams) {
   })
 }
 
-function debug(text){
-  if(DEBUG){
+function debug(text) {
+  if (DEBUG) {
     console.log(text)
   }
 }
 
 async function addr(addr) {
-  if(web3.utils.isAddress(addr)) {
+  if (web3.utils.isAddress(addr)) {
     return web3.utils.toChecksumAddress(addr)
   } else {
     let accounts = await web3.eth.getAccounts()
-    if(accounts[addr] !== undefined) {
+    if (accounts[addr] !== undefined) {
       return accounts[addr]
     } else {
-      throw(`Could not normalize address: ${addr}`)
+      throw (`Could not normalize address: ${addr}`)
     }
   }
 }
 
 let mnemonic = ""
-try{
+try {
   mnemonic = (fs.readFileSync("./mnemonic.txt")).toString().trim()
-}catch(e){ /* ignore for now because it might now have a mnemonic.txt file */ }
+} catch (e) { /* ignore for now because it might now have a mnemonic.txt file */ }
 
 module.exports = {
   defaultNetwork: 'localhost',
@@ -111,7 +111,7 @@ module.exports = {
     },
   },
   solc: {
-    version : "0.6.6",
+    version: "0.8.0",
     optimizer: {
       enabled: true,
       runs: 200

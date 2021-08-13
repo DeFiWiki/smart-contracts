@@ -178,7 +178,10 @@ contract WikiPagesRegistry {
             !sectionExists(_newSectionHash),
             "section already exists, please include metadata"
         );
-
+        // get hash which to update
+        string memory oldHash = wikiPages[_pagePositionInArray][
+            _sectionPositionInArray
+        ];
         // changes hash in array
         wikiPages[_pagePositionInArray][
             _sectionPositionInArray
@@ -186,9 +189,7 @@ contract WikiPagesRegistry {
         // updates mapping pageSectionMaintainer
         pageSectionMaintainer[_newSectionHash] = msg.sender;
         // update mapping getPreviousHash
-        getPreviousHash[_newSectionHash] = wikiPages[_pagePositionInArray][
-            _sectionPositionInArray
-        ];
+        getPreviousHash[_newSectionHash] = oldHash;
 
         // TODO update section metadata
         return true;
