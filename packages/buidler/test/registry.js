@@ -23,10 +23,10 @@ describe("My Dapp", function () {
     });
     context("Add new Page", async () => {
       beforeEach("deploy contract + add page", async function () {
-        registryContract = await WikiPagesRegistry.new();
-        const pageName = "wik1";
-        const sections = ["hash1", "hash2"];
-        await registryContract.addNewPage(pageName, sections);
+        registryContract = await WikiPagesRegistry.new()
+        const pageName = "wik1"
+        const sections = ["hash1", "hash2"]
+        await registryContract.addNewPage(pageName, sections)
       })
       it("should fail if page exists", async () => {
         const pageName = "wik1";
