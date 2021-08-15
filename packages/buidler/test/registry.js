@@ -12,7 +12,7 @@ describe("My Dapp", function () {
   });
   describe("Deploy Registry Contract and add new page", function () {
     it("Should deploy my Registry Contract", async function () {
-      const registryContract = await WikiPagesRegistry.new();
+      registryContract = await WikiPagesRegistry.new();
     });
     context("Add new page", async () => {
       it("adding new page with two sections", async () => {
@@ -22,8 +22,6 @@ describe("My Dapp", function () {
         const sec2Metadata = [pageName, "tvl", "hash2"];
         const sections = [sec1Metadata, sec2Metadata];
         await registryContract.addNewPage(pageName, sections);
-        console.log(await registryContract.getSectionMetadata("hash2"));
-        console.log(await registryContract.pageSectionMaintainer("hash2"));
       });
     });
     context("Add new Page", async () => {
@@ -35,11 +33,12 @@ describe("My Dapp", function () {
         const sections = [sec1Metadata, sec2Metadata];
         await registryContract.addNewPage(pageName, sections);
       })
-
       it("should fail if page exists", async () => {
-        const newpageName = "wik1";
-        const newsections = ["hash3", "hash4"];
-        await assertRevert(registryContract.addNewPage(newpageName, newsections));
+        const pageName = "wik1";
+        const sec1Metadata = [pageName, "abstract", "hash1"];
+        const sec2Metadata = [pageName, "tvl", "hash2"];
+        const sections = [sec1Metadata, sec2Metadata];
+        await assertRevert(registryContract.addNewPage(pageName, sections));
       });
       it("should fail if section exists", async () => {
         const pageName = "wik2";
@@ -96,7 +95,7 @@ describe("My Dapp", function () {
       });
     })
     context("Update section", async () => {
-      beforeEach("deploy contract + add page + set account1 maintainer", async function () {
+      beforeEach("deploy contract + add page + set account1 maintainer ", async function () {
         registryContract = await WikiPagesRegistry.new();
         const pageName = "wik1";
         const sections = ["hash1", "hash2"];
@@ -106,7 +105,7 @@ describe("My Dapp", function () {
         const sections2 = ["hash21", "hash22"];
         await registryContract.addNewPage(pageName2, sections2);
       })
-      it("should update section + check maintainer + check previous hash + update section metadata ", async () => {
+      it("should update section and check maintainer and check previous hash", async () => {
         const pageName = "wik1";
         const section = "hash3";
         await registryContract.updateSection(1, 0, section, { from: account1 });
@@ -117,9 +116,6 @@ describe("My Dapp", function () {
         assert(secMaintainer == account1);
         const previousHash = await registryContract.getPreviousHash(section);
         assert(previousHash == "hash1");
-        const sectionMetadata = await registryContract.getSectionMetadata(newSection);
-        console.log(sectionMetadata);
-        assert(await sectionMetadata.currentHash == newSection);
       })
       it("should fail if msg sender not maintainer", async () => {
         const pageName = "wik1";
