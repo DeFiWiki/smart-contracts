@@ -18,8 +18,6 @@ contract WikiPagesRegistry {
         string wikiPageName;
         string sectionName;
         string currentHash;
-        string previousHash;
-        address sectionMaintainer;
     }
 
     mapping(string => uint256) public pagePositionInArray;
@@ -47,43 +45,59 @@ contract WikiPagesRegistry {
     function createSectionMetadata(
         string memory _wikiPageName,
         string memory _sectionName,
-        string memory _currentHash,
-        address _sectionMaintainer
-    ) public {
-        // checks if section has unique hash => unique content
-        require(!sectionExists(_currentHash), "section already exists");
-        // checks if wiki page exists
-        require(pagePositionInArray[_wikiPageName] != 0);
+        string memory _currentHash
+    ) internal {
+        // checks if wiki page is new
+        require(pagePositionInArray[_wikiPageName] == 0);
 
         // SectionMetadata
         SectionMetadata memory section = SectionMetadata(
             _wikiPageName,
             _sectionName,
-            _currentHash,
-            "",
-            _sectionMaintainer
+            _currentHash
         );
         getSectionMetadata[_currentHash] = section;
+    }
+
+    // updates hash in section metadata mapping
+    function updateMetadataHash(
+        string memory _currentHash,
+        string memory _newHash
+    ) internal {
+        SectionMetadata memory section = getSectionMetadata[_currentHash];
+        section.currentHash = _newHash;
+        getSectionMetadata[_newHash] = section;
     }
 
     // !! only governance
     function addNewPage(
         string memory _wikiPageName,
-        string[] memory _sectionHashes
+        string[][] memory _sectionMetadatas
     ) external {
         // check if page does not already exists
         require(!pageExists[_wikiPageName], "wiki_page_does_already_exist");
 
-        for (uint256 i = 0; i < _sectionHashes.length; i++) {
+        // creates array for sectionHashes;
+        string[] memory _sectionHashes = new string[](_sectionMetadatas.length);
+
+        for (uint256 i = 0; i < _sectionMetadatas.length; i++) {
             // checks if section has unique hash => unique content
             require(
-                !sectionExists(_sectionHashes[i]),
+                !sectionExists(_sectionMetadatas[i][2]),
                 "section already exists"
             );
             // adds placeholder maintainer for sections, this is necessary not to break fn sectionExists
             pageSectionMaintainer[
-                _sectionHashes[i]
+                _sectionMetadatas[i][2]
             ] = 0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF;
+            // writes hash into sectionHashes array
+            _sectionHashes[i] = _sectionMetadatas[i][2];
+            // creates section metada
+            createSectionMetadata(
+                _sectionMetadatas[i][0],
+                _sectionMetadatas[i][1],
+                _sectionMetadatas[i][2]
+            );
         }
 
         // creates new page in array + writes section hashes
@@ -191,7 +205,9 @@ contract WikiPagesRegistry {
         // update mapping getPreviousHash
         getPreviousHash[_newSectionHash] = oldHash;
 
-        // TODO update section metadata
+        // updates hash in section metadata mapping
+        updateMetadataHash(oldHash, _newSectionHash);
+
         return true;
     }
 
