@@ -47,9 +47,6 @@ contract WikiPagesRegistry {
         string memory _sectionName,
         string memory _currentHash
     ) internal {
-        // checks if wiki page is new
-        require(pagePositionInArray[_wikiPageName] == 0);
-
         // SectionMetadata
         SectionMetadata memory section = SectionMetadata(
             _wikiPageName,
@@ -84,7 +81,7 @@ contract WikiPagesRegistry {
             // checks if section has unique hash => unique content
             require(
                 !sectionExists(_sectionMetadatas[i][2]),
-                "section already exists"
+                "section_hash_already_exists"
             );
             // adds placeholder maintainer for sections, this is necessary not to break fn sectionExists
             pageSectionMaintainer[
@@ -132,7 +129,7 @@ contract WikiPagesRegistry {
     // TODO only governance
     function addNewSections(
         string memory _wikiPageName,
-        string[] memory _newSectionHashes
+        string[][] memory _sectionMetadatas
     ) public {
         // checks if wiki does not yet exists
         require(
@@ -142,17 +139,22 @@ contract WikiPagesRegistry {
 
         uint256 pagePosition = pagePositionInArray[_wikiPageName];
 
-        for (uint256 i = 0; i < _newSectionHashes.length; i++) {
+        for (uint256 i = 0; i < _sectionMetadatas.length; i++) {
             // checks if section has unique hash => unique content
             require(
-                !sectionExists(_newSectionHashes[i]),
-                "section already exists"
+                !sectionExists(_sectionMetadatas[i][2]),
+                "section_hash_already_exists"
             );
-            wikiPages[pagePosition].push(_newSectionHashes[i]);
+            wikiPages[pagePosition].push(_sectionMetadatas[i][2]);
             // adds placeholder maintainer for sections, this is necessary not to break fn sectionExists
             pageSectionMaintainer[
-                _newSectionHashes[i]
+                _sectionMetadatas[i][2]
             ] = 0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF;
+            createSectionMetadata(
+                _sectionMetadatas[i][0],
+                _sectionMetadatas[i][1],
+                _sectionMetadatas[i][2]
+            );
         }
 
         // wikiPages[pagePosition].push(_newSectionHashes);
